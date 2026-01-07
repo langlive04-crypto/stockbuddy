@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Data files (避免上傳大型資料)
+data/*.csv
+data/*.xlsx
+data/*.json
+!data/.gitkeep
+
+# Output files
+output/*.csv
+output/*.xlsx
+output/*.png
+output/*.html
+!output/.gitkeep
+
+# API Keys / Secrets
+.env
+config/secrets.py
+*_secret*
+*_key*
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+*.pickle
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
