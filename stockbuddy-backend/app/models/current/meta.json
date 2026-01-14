@@ -1,0 +1,25 @@
+{
+  "version": "v20260114_191003_ful",
+  "created_at": "2026-01-14T19:10:03.801572",
+  "metrics": {
+    "cv_accuracy": 0.6863587129291772,
+    "accuracy": 0.6884771279675739,
+    "f1": 0.7060109289617487
+  },
+  "config": {
+    "training_method": "full",
+    "samples_count": 17266,
+    "feature_count": 55,
+    "predict_days": 5,
+    "data_sources": [
+      "historical"
+    ],
+    "stock_count": 97,
+    "high_quality_samples": 0,
+    "rejected_samples": 0,
+    "class_distribution": {
+      "0": 8199,
+      "1": 9067
+    }
+  }
+}

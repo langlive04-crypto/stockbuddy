@@ -1,0 +1,59 @@
+{
+  "holdings": [],
+  "transactions": [
+    {
+      "type": "BUY",
+      "stock_id": "2330",
+      "stock_name": "台積電",
+      "price": 1000.0,
+      "quantity": 1,
+      "date": "2025-12-21",
+      "timestamp": "2025-12-21T23:46:42.385742"
+    },
+    {
+      "type": "SELL",
+      "stock_id": "2330",
+      "stock_name": "台積電",
+      "price": 1000.0,
+      "quantity": 1,
+      "date": "2025-12-22",
+      "timestamp": "2025-12-22T12:03:32.721817"
+    },
+    {
+      "type": "BUY",
+      "stock_id": "2334",
+      "stock_name": "2334",
+      "price": 73.7,
+      "quantity": 10,
+      "date": "2025-12-20",
+      "timestamp": "2025-12-22T12:04:36.218846"
+    },
+    {
+      "type": "BUY",
+      "stock_id": "00893",
+      "stock_name": "00893",
+      "price": 15.0,
+      "quantity": 20,
+      "date": "2025-12-22",
+      "timestamp": "2025-12-23T03:39:11.603513"
+    },
+    {
+      "type": "SELL",
+      "stock_id": "2334",
+      "stock_name": "2334",
+      "price": 73.7,
+      "quantity": 10,
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T13:30:33.041103"
+    },
+    {
+      "type": "SELL",
+      "stock_id": "00893",
+      "stock_name": "00893",
+      "price": 15.0,
+      "quantity": 20,
+      "date": "2025-12-30",
+      "timestamp": "2025-12-30T13:30:35.384363"
+    }
+  ]
+}

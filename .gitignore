@@ -62,3 +62,12 @@ node_modules/
 
 # Frontend build
 stockbuddy-frontend/dist/
+stockbuddy-frontend/.vite/
+
+# Backend data
+stockbuddy-backend/data/*.db
+stockbuddy-backend/data/*.json
+!stockbuddy-backend/data/.gitkeep
+
+# Old nested structure (keep for reference but don't track)
+data/股票程式開發/
