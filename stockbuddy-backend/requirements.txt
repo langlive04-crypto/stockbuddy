@@ -45,3 +45,15 @@ passlib[bcrypt]>=1.7.4
 
 # V10.38: 錯誤監控
 sentry-sdk[fastapi]>=1.40.0
+
+# V10.41: AI 解釋性模組 (Phase 1)
+shap>=0.44.0
+
+# V10.41: FinBERT 情緒分析 (Phase 1)
+transformers>=4.36.0
+torch>=2.1.0
+sentencepiece>=0.1.99
+
+# V10.41: 視覺化 (可選)
+matplotlib>=3.8.0
+plotly>=5.18.0

@@ -1,0 +1,43 @@
+# StockBuddy V10.41 新增依賴
+# 安裝方式: pip install -r requirements-v10.41.txt
+
+# ===== Phase 1: SHAP + FinBERT =====
+
+# SHAP 解釋性 AI
+shap>=0.44.0
+
+# Transformers (FinBERT)
+transformers>=4.36.0
+torch>=2.1.0
+sentencepiece>=0.1.99
+
+# ===== Phase 2: Temporal Fusion Transformer =====
+
+# PyTorch Forecasting
+pytorch-forecasting>=1.0.0
+pytorch-lightning>=2.1.0
+
+# ===== Phase 3: 強化學習 =====
+
+# Stable Baselines 3
+stable-baselines3>=2.2.0
+gymnasium>=0.29.0
+
+# ===== 通用依賴 =====
+
+# 已在 V10.40 requirements.txt 中，確認版本相容
+# numpy>=1.26.0
+# pandas>=2.2.0
+# scikit-learn>=1.4.0
+
+# ===== 可選依賴 (加速/視覺化) =====
+
+# GPU 加速 (可選，需 CUDA)
+# torch[cuda]>=2.1.0
+
+# 視覺化
+matplotlib>=3.8.0
+plotly>=5.18.0
+
+# MLOps (可選)
+# mlflow>=2.9.0

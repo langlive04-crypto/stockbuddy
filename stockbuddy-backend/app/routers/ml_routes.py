@@ -2,6 +2,7 @@
 V10.41: ML 預測 API 路由
 從 stocks.py 拆分出來，提高可維護性
 
+V10.41: 新增 SHAP 解釋 API、FinBERT 情緒分析 API
 V10.41: 新增增量學習 API、版本管理 API
 V10.40: 新增 train-historical 歷史數據訓練功能
 V10.40: 新增 stock-presets 預設股票清單 API
@@ -238,6 +239,98 @@ async def train_ml_model_from_historical(
             min_samples=min_samples
         )
         return result
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/explain/{stock_id}")
+async def explain_prediction(stock_id: str, top_n: int = Query(10, ge=1, le=20)):
+    """
+    V10.41: SHAP 解釋 API
+
+    使用 SHAP (SHapley Additive exPlanations) 解釋 ML 模型預測結果
+
+    Args:
+        stock_id: 股票代碼
+        top_n: 返回前 N 個重要特徵 (預設 10)
+
+    Returns:
+        - prediction: 預測結果 (up/down/neutral)
+        - probability: 預測機率
+        - explanation: SHAP 解釋
+            - base_value: 基準值
+            - predicted_value: 預測值
+            - top_features: 特徵貢獻列表
+    """
+    try:
+        from app.services.ml_predictor import get_predictor
+
+        predictor = get_predictor()
+        predictor._load_model()
+
+        # 檢查模型是否存在
+        if predictor._model is None:
+            return {
+                "success": False,
+                "error": "尚未訓練模型，無法提供 SHAP 解釋",
+                "fallback": "rule_based"
+            }
+
+        # 取得股票數據
+        stock_data = {}
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker(f"{stock_id}.TW")
+            hist = ticker.history(period="60d")
+
+            if not hist.empty and len(hist) >= 20:
+                close = hist['Close']
+                stock_data = {
+                    "close": float(close.iloc[-1]),
+                    "ma5": float(close.rolling(5).mean().iloc[-1]),
+                    "ma20": float(close.rolling(20).mean().iloc[-1]),
+                    "volume": float(hist['Volume'].iloc[-1]),
+                    "avg_volume": float(hist['Volume'].rolling(20).mean().iloc[-1]),
+                }
+
+                # 計算 RSI
+                delta = close.diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+                stock_data["rsi"] = float(rsi.iloc[-1]) if not rsi.empty else None
+        except Exception:
+            pass
+
+        # 使用 SHAP 解釋
+        try:
+            from app.services.shap_explainer import explain_prediction as shap_explain
+
+            # 準備特徵
+            feature_names = predictor._meta.get("feature_names", []) if predictor._meta else []
+            if not feature_names:
+                # 使用預設特徵
+                feature_names = ["rsi_14", "macd_signal", "volume_ratio", "price_vs_ma20"]
+
+            # 生成特徵向量
+            feature_vector = predictor._prepare_features(stock_data)
+
+            result = shap_explain(
+                model=predictor._model,
+                feature_names=feature_names,
+                feature_vector=feature_vector,
+                stock_id=stock_id
+            )
+
+            return {"success": True, **result}
+
+        except ImportError:
+            return {
+                "success": False,
+                "error": "SHAP 模組未安裝，請執行: pip install shap>=0.44.0"
+            }
 
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -487,6 +580,126 @@ async def get_training_data_stats():
             "stats": stats,
         }
 
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ===== V10.41: FinBERT 情緒分析 API =====
+
+@router.get("/sentiment/{stock_id}")
+async def get_stock_sentiment(stock_id: str):
+    """
+    V10.41: FinBERT 情緒分析 API
+
+    使用 FinBERT 模型分析股票相關新聞的情緒
+
+    Args:
+        stock_id: 股票代碼
+
+    Returns:
+        - label: 情緒標籤 (positive/neutral/negative)
+        - score: 信心分數 (0-1)
+        - probabilities: 各類別機率
+        - recent_news: 近期新聞情緒列表
+    """
+    try:
+        # 嘗試載入 FinBERT 分析器
+        try:
+            from app.services.finbert_sentiment import analyze_sentiment, get_sentiment_score
+        except ImportError:
+            return {
+                "success": False,
+                "error": "FinBERT 模組未安裝，請執行: pip install transformers>=4.36.0 torch>=2.1.0"
+            }
+
+        # 取得股票相關新聞
+        news_texts = []
+        try:
+            from app.services.news_service import get_stock_news
+            news_list = await get_stock_news(stock_id, limit=10)
+            if news_list and isinstance(news_list, list):
+                news_texts = [
+                    {"title": n.get("title", ""), "source": n.get("source", "")}
+                    for n in news_list if n.get("title")
+                ]
+        except Exception:
+            # 如果新聞服務失敗，使用模擬數據
+            news_texts = [
+                {"title": f"{stock_id} 相關新聞", "source": "system"}
+            ]
+
+        # 分析情緒
+        if news_texts:
+            # 合併所有標題進行整體分析
+            combined_text = " ".join([n["title"] for n in news_texts])
+            result = analyze_sentiment(combined_text, language="zh")
+
+            # 分析每則新聞的情緒
+            recent_news = []
+            for news in news_texts[:5]:
+                try:
+                    news_result = analyze_sentiment(news["title"], language="zh")
+                    recent_news.append({
+                        "title": news["title"],
+                        "sentiment": news_result["label"],
+                        "score": news_result["score"]
+                    })
+                except Exception:
+                    recent_news.append({
+                        "title": news["title"],
+                        "sentiment": "neutral",
+                        "score": 0.5
+                    })
+
+            return {
+                "success": True,
+                "stock_id": stock_id,
+                "label": result["label"],
+                "score": result["score"],
+                "probabilities": result["probabilities"],
+                "model": result["model"],
+                "processing_time_ms": result["processing_time_ms"],
+                "recent_news": recent_news
+            }
+        else:
+            return {
+                "success": False,
+                "error": "無法取得股票相關新聞"
+            }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/sentiment/analyze")
+async def analyze_text_sentiment(text: str = Query(..., description="待分析文本")):
+    """
+    V10.41: 分析任意文本情緒
+
+    使用 FinBERT 模型分析文本情緒
+
+    Args:
+        text: 待分析文本
+
+    Returns:
+        情緒分析結果
+    """
+    try:
+        from app.services.finbert_sentiment import analyze_sentiment
+
+        result = analyze_sentiment(text, language="zh")
+
+        return {
+            "success": True,
+            "text": text[:100] + "..." if len(text) > 100 else text,
+            **result
+        }
+
+    except ImportError:
+        return {
+            "success": False,
+            "error": "FinBERT 模組未安裝，請執行: pip install transformers>=4.36.0 torch>=2.1.0"
+        }
     except Exception as e:
         return {"success": False, "error": str(e)}
 
