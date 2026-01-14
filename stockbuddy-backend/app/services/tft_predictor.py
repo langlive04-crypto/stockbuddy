@@ -24,7 +24,7 @@ numpy = None
 
 
 def _ensure_dependencies():
-    """確保依賴已導入"""
+    """確保依賴已導入 (可選)"""
     global torch, pytorch_forecasting, pandas, numpy
     if torch is None:
         try:
@@ -37,11 +37,24 @@ def _ensure_dependencies():
             pandas = _pd
             numpy = _np
             logger.info("[TFT] 依賴載入成功")
-        except ImportError as e:
-            raise ImportError(
-                "請安裝依賴: pip install pytorch-forecasting>=1.0.0 "
-                "pytorch-lightning>=2.1.0 torch>=2.1.0"
-            ) from e
+            return True
+        except ImportError:
+            logger.warning("[TFT] 深度學習依賴未安裝，將使用規則引擎備案")
+            # 僅導入 pandas 和 numpy (基礎依賴)
+            try:
+                import pandas as _pd
+                import numpy as _np
+                pandas = _pd
+                numpy = _np
+            except ImportError:
+                pass
+            return False
+    return torch is not None
+
+
+def _has_full_dependencies():
+    """檢查是否有完整依賴"""
+    return torch is not None and pytorch_forecasting is not None
 
 
 @dataclass
@@ -94,16 +107,16 @@ class TFTPredictor:
             prediction_length: 預測天數
             device: 裝置 ("auto", "cpu", "cuda")
         """
-        _ensure_dependencies()
+        self._has_deps = _ensure_dependencies()
 
         self.model_path = model_path
         self.prediction_length = prediction_length
 
         # 自動選擇裝置
-        if device == "auto":
+        if self._has_deps and device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
-            self.device = device
+            self.device = device if device != "auto" else "cpu"
 
         self._model = None
         self._loaded = False
@@ -111,6 +124,11 @@ class TFTPredictor:
     def _load_model(self):
         """載入 TFT 模型"""
         if self._loaded:
+            return
+
+        if not self._has_deps:
+            logger.warning("[TFT] 深度學習依賴未安裝，將使用規則引擎備案")
+            self._loaded = True
             return
 
         if self.model_path and Path(self.model_path).exists():

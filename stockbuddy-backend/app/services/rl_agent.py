@@ -23,21 +23,31 @@ stable_baselines3 = None
 
 
 def _ensure_dependencies():
-    """確保依賴已導入"""
+    """確保依賴已導入 (可選)"""
     global numpy, gymnasium, stable_baselines3
     if numpy is None:
         try:
             import numpy as _np
+            numpy = _np
+        except ImportError:
+            pass
+
+        try:
             import gymnasium as _gym
             import stable_baselines3 as _sb3
-            numpy = _np
             gymnasium = _gym
             stable_baselines3 = _sb3
-            logger.info("[RL] 依賴載入成功")
-        except ImportError as e:
-            raise ImportError(
-                "請安裝依賴: pip install stable-baselines3>=2.2.0 gymnasium>=0.29.0"
-            ) from e
+            logger.info("[RL] RL 依賴載入成功")
+            return True
+        except ImportError:
+            logger.warning("[RL] RL 依賴未安裝，將使用規則引擎備案")
+            return False
+    return gymnasium is not None
+
+
+def _has_full_dependencies():
+    """檢查是否有完整 RL 依賴"""
+    return gymnasium is not None and stable_baselines3 is not None
 
 
 @dataclass
@@ -200,7 +210,7 @@ class RLTradingAgent:
         Args:
             model_path: 模型檔案路徑
         """
-        _ensure_dependencies()
+        self._has_deps = _ensure_dependencies()
 
         self.model_path = model_path
         self._model = None
@@ -209,6 +219,11 @@ class RLTradingAgent:
     def _load_model(self):
         """載入模型"""
         if self._loaded:
+            return
+
+        if not self._has_deps:
+            logger.warning("[RL] RL 依賴未安裝，將使用規則引擎備案")
+            self._loaded = True
             return
 
         if self.model_path and Path(self.model_path).exists():
@@ -349,7 +364,7 @@ class RLTradingAgent:
 
         # 決定目標持倉
         target = current_position + signal * 0.2
-        target = numpy.clip(target, 0, 1)
+        target = max(0, min(1, target))  # clip without numpy
 
         # 決定動作
         if signal > 0.2:
