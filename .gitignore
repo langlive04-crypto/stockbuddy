@@ -46,8 +46,19 @@ logs/
 # Cache
 .cache/
 *.pickle
-*.pkl
+# *.pkl - 保留模型檔案以支援版本追蹤
 
 # OS
 .DS_Store
 Thumbs.db
+nul
+
+# Claude Code temp files
+tmpclaude-*
+.claude/settings.local.json
+
+# Node modules
+node_modules/
+
+# Frontend build
+stockbuddy-frontend/dist/

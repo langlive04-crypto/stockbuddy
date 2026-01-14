@@ -1,3 +1,3 @@
 @echo off
 cd /d "J:\程式碼練習\股票分析程式-Claude-Code版"
-claude
+start "" wt -d . cmd /k claude
