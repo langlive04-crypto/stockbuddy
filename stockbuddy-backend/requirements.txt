@@ -57,3 +57,11 @@ sentencepiece>=0.1.99
 # V10.41: 視覺化 (可選)
 matplotlib>=3.8.0
 plotly>=5.18.0
+
+# V10.41: TFT 時間序列預測 (Phase 2)
+pytorch-forecasting>=1.0.0
+pytorch-lightning>=2.1.0
+
+# V10.41: PPO 強化學習 (Phase 3)
+stable-baselines3>=2.2.0
+gymnasium>=0.29.0

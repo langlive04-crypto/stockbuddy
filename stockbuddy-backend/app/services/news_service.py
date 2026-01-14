@@ -1,8 +1,10 @@
 """
-新聞服務模組
+新聞服務模組 V10.41
 - 整合多個新聞來源
 - 提供股票相關新聞
 - 進行情緒分析
+
+V10.41: 整合 FinBERT 深度學習情緒分析
 """
 
 import asyncio
@@ -67,11 +69,13 @@ NEGATIVE_KEYWORDS = [
 
 class NewsService:
     """新聞服務"""
-    
+
     def __init__(self):
         self.cache = {}
         self.cache_time = {}
         self.cache_duration = 300  # 5分鐘快取
+        self._finbert_available = None  # V10.41: FinBERT 可用性快取
+        self._finbert_analyzer = None   # V10.41: FinBERT 分析器實例
     
     async def get_stock_news(self, stock_id: str, limit: int = 5) -> List[Dict]:
         """取得個股相關新聞"""
@@ -235,10 +239,69 @@ class NewsService:
             return []
     
     def _analyze_sentiment(self, text: str) -> Dict:
-        """分析文字情緒"""
+        """
+        分析文字情緒
+
+        V10.41: 優先使用 FinBERT 深度學習模型，
+        若 FinBERT 不可用則回退到關鍵字匹配
+        """
+        # V10.41: 嘗試使用 FinBERT
+        finbert_result = self._analyze_with_finbert(text)
+        if finbert_result:
+            return finbert_result
+
+        # 回退: 關鍵字匹配分析
+        return self._analyze_with_keywords(text)
+
+    def _analyze_with_finbert(self, text: str) -> Optional[Dict]:
+        """
+        V10.41: 使用 FinBERT 進行情緒分析
+        """
+        # 檢查 FinBERT 是否可用
+        if self._finbert_available is False:
+            return None
+
+        try:
+            # 延遲導入 FinBERT
+            if self._finbert_analyzer is None:
+                from app.services.finbert_sentiment import FinBERTSentiment
+                self._finbert_analyzer = FinBERTSentiment(language="zh")
+                self._finbert_available = True
+
+            # 分析情緒
+            result = self._finbert_analyzer.analyze(text)
+
+            # 轉換為內部格式
+            label_map = {
+                "positive": "利多",
+                "negative": "利空",
+                "neutral": "中性"
+            }
+
+            return {
+                "type": result.label,
+                "score": int(result.probabilities.get("positive", 0.5) * 100),
+                "label": label_map.get(result.label, "中性"),
+                "confidence": result.score,
+                "model": "finbert",  # V10.41: 標記使用的模型
+            }
+
+        except ImportError:
+            # FinBERT 未安裝
+            self._finbert_available = False
+            return None
+        except Exception as e:
+            # FinBERT 分析失敗，回退到關鍵字
+            print(f"[NewsService] FinBERT 分析失敗: {e}")
+            return None
+
+    def _analyze_with_keywords(self, text: str) -> Dict:
+        """
+        使用關鍵字匹配進行情緒分析 (回退方案)
+        """
         positive_count = sum(1 for kw in POSITIVE_KEYWORDS if kw in text)
         negative_count = sum(1 for kw in NEGATIVE_KEYWORDS if kw in text)
-        
+
         if positive_count > negative_count:
             sentiment = "positive"
             score = min(100, 50 + positive_count * 15)
@@ -251,11 +314,12 @@ class NewsService:
             sentiment = "neutral"
             score = 50
             label = "中性"
-        
+
         return {
             "type": sentiment,
             "score": score,
             "label": label,
+            "model": "keywords",  # V10.41: 標記使用的模型
         }
     
     def _parse_date(self, date_str: str) -> str:

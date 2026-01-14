@@ -704,6 +704,154 @@ async def analyze_text_sentiment(text: str = Query(..., description="待分析�
         return {"success": False, "error": str(e)}
 
 
+# ===== V10.41: TFT 時間序列預測 API (Phase 2) =====
+
+@router.get("/forecast/{stock_id}")
+async def get_stock_forecast(stock_id: str):
+    """
+    V10.41: TFT 時間序列預測 API
+
+    使用 Temporal Fusion Transformer 預測股票未來走勢
+
+    Args:
+        stock_id: 股票代碼
+
+    Returns:
+        - predictions: 未來 5 日報酬預測
+        - attention: 注意力權重 (模型關注的特徵)
+        - model_version: 使用的模型版本
+    """
+    try:
+        # 取得歷史數據
+        history = []
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker(f"{stock_id}.TW")
+            hist = ticker.history(period="90d")
+
+            if not hist.empty:
+                for idx, row in hist.iterrows():
+                    history.append({
+                        "date": idx.strftime("%Y-%m-%d"),
+                        "close": float(row["Close"]),
+                        "open": float(row["Open"]),
+                        "high": float(row["High"]),
+                        "low": float(row["Low"]),
+                        "volume": float(row["Volume"])
+                    })
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"無法取得歷史數據: {e}"
+            }
+
+        if len(history) < 30:
+            return {
+                "success": False,
+                "error": "歷史數據不足 (需至少 30 天)"
+            }
+
+        # 使用 TFT 預測
+        try:
+            from app.services.tft_predictor import predict_stock as tft_predict
+            result = tft_predict(history, stock_id)
+            return {"success": True, **result}
+
+        except ImportError:
+            return {
+                "success": False,
+                "error": "TFT 模組未安裝，請執行: pip install pytorch-forecasting>=1.0.0"
+            }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# ===== V10.41: PPO 強化學習 API (Phase 3) =====
+
+@router.post("/rl/suggest")
+async def get_rl_suggestion(
+    stock_id: str = Query(..., description="股票代碼"),
+    current_position: float = Query(0.0, ge=0, le=1, description="目前持倉比例 (0-1)"),
+    risk_tolerance: str = Query("medium", description="風險容忍度 (low/medium/high)")
+):
+    """
+    V10.41: RL 交易建議 API
+
+    使用 PPO 強化學習代理生成交易建議
+
+    Args:
+        stock_id: 股票代碼
+        current_position: 目前持倉比例 (0-1)
+        risk_tolerance: 風險容忍度
+
+    Returns:
+        - action: 建議動作 (buy/sell/hold/increase/decrease)
+        - target_position: 建議目標持倉比例
+        - confidence: 信心度
+        - reasoning: 決策理由
+    """
+    try:
+        # 取得股票市場狀態
+        market_state = {}
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker(f"{stock_id}.TW")
+            hist = ticker.history(period="60d")
+
+            if not hist.empty and len(hist) >= 20:
+                close = hist['Close']
+
+                # 計算 RSI
+                delta = close.diff()
+                gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+                loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+                rs = gain / loss
+                rsi = 100 - (100 / (1 + rs))
+
+                # 計算 MACD
+                ema12 = close.ewm(span=12).mean()
+                ema26 = close.ewm(span=26).mean()
+                macd = ema12 - ema26
+                signal = macd.ewm(span=9).mean()
+
+                market_state = {
+                    "rsi": float(rsi.iloc[-1]) if not rsi.empty else 50,
+                    "macd_signal": float((macd - signal).iloc[-1]) if not macd.empty else 0,
+                    "price_vs_ma20": float((close.iloc[-1] / close.rolling(20).mean().iloc[-1] - 1) * 100),
+                    "volume_ratio": float(hist['Volume'].iloc[-1] / hist['Volume'].rolling(20).mean().iloc[-1]),
+                    "foreign_net_ratio": 0,  # 需要另外取得籌碼數據
+                }
+        except Exception:
+            # 使用預設值
+            market_state = {
+                "rsi": 50,
+                "macd_signal": 0,
+                "price_vs_ma20": 0,
+                "volume_ratio": 1,
+                "foreign_net_ratio": 0
+            }
+
+        # 使用 RL 代理
+        try:
+            from app.services.rl_agent import suggest_trade
+            result = suggest_trade(market_state, current_position, risk_tolerance)
+            return {
+                "success": True,
+                "stock_id": stock_id,
+                **result
+            }
+
+        except ImportError:
+            return {
+                "success": False,
+                "error": "RL 模組未安裝，請執行: pip install stable-baselines3>=2.2.0 gymnasium>=0.29.0"
+            }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @router.delete("/versions/{version_id}")
 async def delete_model_version(version_id: str):
     """
