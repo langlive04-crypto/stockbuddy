@@ -1,0 +1,29 @@
+# =============================================
+# StockBuddy 本地開發完整依賴
+# 包含所有 V10.41 AI 功能
+# =============================================
+# 使用方式: pip install -r requirements-local.txt
+
+# 引入雲端基礎依賴
+-r requirements.txt
+
+# ===== V10.41: AI 升級包 (僅本地) =====
+
+# Phase 1: SHAP 解釋性 AI (~200MB)
+shap>=0.44.0
+
+# Phase 1: FinBERT 情緒分析 (~1.2GB)
+transformers>=4.36.0
+torch>=2.1.0
+sentencepiece>=0.1.99
+
+# Phase 2: TFT 時間序列預測 (~400MB, 需 Python 3.12)
+# pytorch-forecasting>=1.0.0
+# pytorch-lightning>=2.1.0
+
+# Phase 3: PPO 強化學習 (~150MB)
+stable-baselines3>=2.2.0
+gymnasium>=0.29.0
+
+# 視覺化
+matplotlib>=3.8.0

@@ -1,8 +1,15 @@
+# =============================================
+# StockBuddy 雲端部署依賴 (輕量版)
+# Render 免費方案限制 512MB 記憶體
+# AI 功能使用規則引擎備案
+# =============================================
+# 本地完整 AI 功能請使用: pip install -r requirements-local.txt
+
 # FastAPI 框架
 fastapi>=0.109.0
 uvicorn>=0.27.0
 
-# 資料處理 (使用較新版本支援 Python 3.11+)
+# 資料處理
 pandas>=2.2.0
 numpy>=1.26.0
 
@@ -22,13 +29,13 @@ python-dotenv>=1.0.0
 # CORS
 python-multipart>=0.0.6
 
-# Excel 匯出 (V10.15)
+# Excel 匯出
 openpyxl>=3.1.0
 
-# 時區處理 (V10.24 美股支援)
+# 時區處理
 pytz>=2024.1
 
-# V10.36: ML 預測引擎 (可選，若不需要 ML 功能可不安裝)
+# V10.36: ML 預測引擎 (XGBoost 較輕量，保留)
 xgboost>=2.0.0
 scikit-learn>=1.4.0
 
@@ -46,22 +53,18 @@ passlib[bcrypt]>=1.7.4
 # V10.38: 錯誤監控
 sentry-sdk[fastapi]>=1.40.0
 
-# V10.41: AI 解釋性模組 (Phase 1)
-shap>=0.44.0
-
-# V10.41: FinBERT 情緒分析 (Phase 1)
-transformers>=4.36.0
-torch>=2.1.0
-sentencepiece>=0.1.99
-
-# V10.41: 視覺化 (可選)
-matplotlib>=3.8.0
+# V10.41: 視覺化 (輕量)
 plotly>=5.18.0
 
-# V10.41: TFT 時間序列預測 (Phase 2)
-pytorch-forecasting>=1.0.0
-pytorch-lightning>=2.1.0
-
-# V10.41: PPO 強化學習 (Phase 3)
-stable-baselines3>=2.2.0
-gymnasium>=0.29.0
+# =============================================
+# 以下套件因記憶體限制不安裝於雲端
+# AI 模組會自動使用規則引擎備案
+# =============================================
+# shap>=0.44.0              # SHAP 解釋 → 使用特徵重要性備案
+# transformers>=4.36.0      # FinBERT → 使用關鍵字情緒分析備案
+# torch>=2.1.0              # PyTorch → 不需要
+# pytorch-forecasting>=1.0.0 # TFT → 使用線性趨勢外推備案
+# pytorch-lightning>=2.1.0  # Lightning → 不需要
+# stable-baselines3>=2.2.0  # PPO → 使用 RSI/MACD 規則備案
+# gymnasium>=0.29.0         # Gym → 不需要
+# matplotlib>=3.8.0         # 圖表 → 使用 plotly 替代
