@@ -3,6 +3,9 @@ StockBuddy API 主程式
 V10.15 - 新增擴展 API（匯出、績效分析、櫃買股票）
 V10.37 - 安全性修復：CORS、環境變數、日誌系統、速率限制
 V10.38 - 新增 SQLite 資料庫支援、JWT 認證、錯誤監控
+V10.39 - 選單優化（前端）
+V10.40 - ML 訓練器完善（55 特徵、測試集評估）
+V10.41 - AI 升級包（SHAP、FinBERT、TFT、PPO）+ 雲端輕量化部署
 """
 
 import os
@@ -38,7 +41,7 @@ if SENTRY_ENABLED and SENTRY_DSN:
         traces_sample_rate=float(os.getenv("SENTRY_TRACES_RATE", "0.1")),
         profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_RATE", "0.1")),
         environment=os.getenv("ENVIRONMENT", "development"),
-        release=f"stockbuddy@10.38.0",
+        release=f"stockbuddy@10.41.0",
     )
 
 # V10.37: 速率限制
@@ -90,7 +93,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """應用程式生命週期管理"""
     # 啟動時
-    logger.info("🚀 StockBuddy API V10.38 啟動中...")
+    logger.info("🚀 StockBuddy API V10.41 啟動中...")
     logger.info("📊 功能：股票資料、AI 推薦、績效分析、匯出、風險管理、ML 預測")
 
     # V10.38: 初始化資料庫
@@ -119,7 +122,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="StockBuddy API",
     description="智能選股助手 API - 提供台股資料、技術分析、AI 推薦、績效分析、匯出功能",
-    version="10.38.0",
+    version="10.41.0",
     lifespan=lifespan,
 )
 
@@ -165,7 +168,7 @@ async def root():
     """API 首頁"""
     return {
         "name": "StockBuddy API",
-        "version": "10.38.0",
+        "version": "10.41.0",
         "status": "running",
         "docs": "/docs",
         "endpoints": {
