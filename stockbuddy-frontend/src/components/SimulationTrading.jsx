@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { API_BASE } from '../config';
 
 // 儲存鍵
 const SIMULATION_KEY = 'stockbuddy_simulation';
@@ -111,7 +112,7 @@ const SimulationTrading = () => {
   const fetchRiskInfo = useCallback(async (stockId) => {
     setRiskLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/stocks/risk/stop-loss/${stockId}`);
+      const response = await fetch(`${API_BASE}/api/stocks/risk/stop-loss/${stockId}`);
       if (response.ok) {
         const data = await response.json();
         setRiskInfo(data);
@@ -129,7 +130,7 @@ const SimulationTrading = () => {
   const fetchPositionSize = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/stocks/risk/position-size?capital=${simData.cash}&risk_tolerance=moderate`
+        `${API_BASE}/api/stocks/risk/position-size?capital=${simData.cash}&risk_tolerance=moderate`
       );
       if (response.ok) {
         const data = await response.json();
@@ -155,7 +156,7 @@ const SimulationTrading = () => {
         industry: '未分類', // 模擬資料無產業資訊
       }));
 
-      const response = await fetch('http://localhost:8000/api/stocks/risk/portfolio-assessment', {
+      const response = await fetch(`${API_BASE}/api/stocks/risk/portfolio-assessment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ holdings }),
