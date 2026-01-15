@@ -64,7 +64,7 @@ class FinBERTSentiment:
     MODELS = {
         "en": "ProsusAI/finbert",
         "zh": "hw2942/chinese-finbert-sentiment",
-        "zh_backup": "uer/roberta-base-finetuned-chinanews-chinese"
+        "zh_backup": "lxyuan/distilbert-base-multilingual-cased-sentiments-student"  # 多語言情緒模型
     }
 
     # 標籤對應 (不同模型可能有不同標籤)

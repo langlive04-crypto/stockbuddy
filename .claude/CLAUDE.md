@@ -20,8 +20,48 @@
 
 ## 系統狀態
 
-> **最後檢測**: 2026-01-14
-> **狀態**: V10.41 增量學習系統 ✅
+> **最後檢測**: 2026-01-15
+> **狀態**: V10.41 AI 升級包完成 ✅
+
+### V10.41 AI 升級包 (2026-01-15 完成)
+
+| 階段 | 功能 | 測試結果 | 狀態 |
+|------|------|----------|------|
+| Phase 1 | SHAP + FinBERT | 8/8 通過 | ✅ |
+| Phase 2 | TFT 時間序列預測 | 7/7 通過 | ✅ |
+| Phase 3 | PPO 強化學習 | 10/10 通過 | ✅ |
+
+**新增後端模組**:
+| 模組 | 用途 |
+|------|------|
+| `shap_explainer.py` | SHAP 解釋性 AI，ML 預測可解釋性 |
+| `finbert_sentiment.py` | FinBERT 金融情緒分析 (中/英文) |
+| `tft_predictor.py` | TFT 時間序列預測 (5日預測+區間) |
+| `rl_agent.py` | PPO 強化學習交易代理 |
+
+**新增前端元件**:
+| 元件 | 用途 |
+|------|------|
+| `SHAPWaterfall.jsx` | SHAP 瀑布圖視覺化 |
+| `PredictionExplainer.jsx` | AI 預測解釋面板 |
+
+**新增 API 端點**:
+| 端點 | 方法 | 用途 |
+|------|------|------|
+| `/api/stocks/ml/explain/{stock_id}` | GET | SHAP 解釋 |
+| `/api/stocks/ml/sentiment/{stock_id}` | GET | 股票情緒分析 |
+| `/api/stocks/ml/sentiment/analyze` | POST | 文字情緒分析 |
+| `/api/stocks/ml/forecast/{stock_id}` | GET | TFT 預測 |
+| `/api/stocks/ml/rl/suggest` | POST | RL 交易建議 |
+
+**關鍵技術**:
+- SHAP TreeExplainer 解釋 XGBoost 模型
+- FinBERT (ProsusAI/finbert) 英文 + Chinese FinBERT 中文情緒分析
+- Temporal Fusion Transformer 時間序列預測
+- PPO 強化學習 + Sharpe Ratio 獎勵函數
+- 所有模組皆有規則引擎備案，無依賴時仍可運作
+
+**驗收報告**: `docs/V10.41-AI升級包-驗收報告.md`
 
 ### V10.41 增量學習系統 (2026-01-14 完成)
 
